@@ -27,7 +27,7 @@ def main():
     for i in range(numberVariables):
         print("Digite o nome da " + str(i + 1) + "º variavel")
         name = input()
-        print("1-tensão\n2-corrente")
+        print("1-tensão\n2-corrente\n3-nenhum")
         type = input()
         if type == "1":
             type = ".Vt"
@@ -35,17 +35,20 @@ def main():
         elif type == "2":
             type = ".It"
             unit = "A"
+        elif type == "3":
+            type = ""
+            unit = ""
         nameVariables.append(name + type)
     print("Quantas repetições deseja?")
     nRepeticoes = input()
-    if nRepeticoes == "":
+    if nRepeticoes == "" or nRepeticoes == "0":
         nRepeticoes = 1
     else:
         nRepeticoes = int(nRepeticoes)
     labelRepicoes = []
     if nRepeticoes != 1:
         for i in range(nRepeticoes):
-            print("Digite o titulo da repetção" + str(i + 1) + ":")
+            print("Digite o titulo da repetições" + str(i + 1) + ":")
             label = input()
             labelRepicoes.append(label)
     print("Digite a legenda do eixo X")
@@ -69,11 +72,19 @@ def main():
     x = []
     print("Deseja marcar ponto especifico?\n1-sim\n2-não")
     auxInput = input()
-    xPlot = None
+    yPoints = []
     if(auxInput == "1"):
-        print("Valor do indice di eixo X:")
-        xPlot = int(input())
-
+        print("Quantos?")
+        auxInput = int(input())
+        for i in range(auxInput):
+            print("Valor do valor do eixo Y:")
+            yPoints.append(float(input()))
+    print("Deseja adicionar grade logarítmica no eixo x?\n1-sim\n2-não")
+    auxInput = input()
+    if(auxInput == "1"):
+        log = True
+    else:
+        log = False
     runX = False
     for line in file:
         if runX:
@@ -81,7 +92,10 @@ def main():
                 runX = False
                 break
             else:
-                x.append(float(line))
+                if log:
+                    x.append(np.log10(float(line)))
+                else:
+                    x.append(float(line))
                 continue
         if line[:6] == "<indep":
             valuesLine = line.split(" ")
@@ -175,30 +189,34 @@ def main():
                     connectionstyle="angle,angleA=0,angleB=90,rad=10",
                 ),
             )
-        if xPlot:
-            xmin = round(x[xPlot], 8)
-            ymin = round(y[xPlot], 8)
-            ax.annotate(
-                str(ymin) + unit,
-                xy=(xmin, ymin),
-                xycoords="data",
-                xytext=(-20, 20),
-                textcoords="offset points",
-                bbox=dict(boxstyle="round", fc="0.8"),
-                arrowprops=dict(
-                    arrowstyle="->",
-                    shrinkA=0,
-                    shrinkB=10,
-                    connectionstyle="angle,angleA=0,angleB=90,rad=10",
-                ),
-            )
+        if yPoints:
+            for point in yPoints:
+                indexY = 0
+                for index in range(steps):
+                    if round(y[index],0) == point:
+                        indexY = index
+                xmin = round(x[indexY], 8)
+                ymin = round(point, 8)
+                ax.annotate(
+                    str(ymin) + unit + '\n' + str(round(10**xmin,2)) + ' Hz',
+                    xy=(xmin, ymin),
+                    xycoords="data",
+                    xytext=(-20, 20),
+                    textcoords="offset points",
+                    bbox=dict(boxstyle="round", fc="0.8"),
+                    arrowprops=dict(
+                        arrowstyle="->",
+                        shrinkA=0,
+                        shrinkB=10,
+                        connectionstyle="angle,angleA=0,angleB=90,rad=10",
+                    ),
+                )
     ax.legend()
     ax.set_xlabel(xLabel)
     ax.set_ylabel(yLabel)
     ax.set_title(title)
     plt.show()
     return
-
 
 if __name__ == "__main__":
     main()
